@@ -1,18 +1,13 @@
-#include <WS2tcpip.h>
-#include <regex>
 #include "SocketAddress.h"
 
-#include <iostream>
+#if _WIN32
+#include <WS2tcpip.h>
+#elif __linux__
+#include <arpa/inet.h>
+#endif
 
 SocketAddress::SocketAddress(std::string ip, uint16_t port, AddressFamily family)
 {
-	std::regex ipRegex("/^(?>(?>([a-f0-9]{1,4})(?>:(?1)){7}|(?!(?:.*[a-f0-9](?>:|$)){8,})((?1)(?>:(?1)){0,6})?::(?2)?)|(?>(?>(?1)(?>:(?1)){5}:|(?!(?:.*[a-f0-9]:){6,})(?3)?::(?>((?1)(?>:(?1)){0,4}):)?)?(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(?>\\.(?4)){3}))$/iD");
-
-	if (std::regex_match(ip, ipRegex))
-	{
-		std::cout << "Match\n";
-	}
-
 	_ip = ip;
 	_port = port;
 	_family = (int)family;

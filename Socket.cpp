@@ -1,5 +1,25 @@
 #include "Socket.h"
-#include <iostream>
+
+#if __linux__
+#include <errno.h>
+#include <string.h>
+#include <unistd.h>
+
+constexpr int INVALID_SOCKET = -1;
+constexpr int SOCKET_ERROR = -1;
+
+constexpr auto* closesocket = close;
+#endif // __linux__
+
+// Create pointers to original functions to avoid naming conflicts
+constexpr auto* _bind 		= bind;
+constexpr auto* _listen 	= listen;
+constexpr auto* _accept 	= accept;
+constexpr auto* _connect 	= connect;
+constexpr auto* _send 		= send;
+constexpr auto* _sendto 	= sendto;
+constexpr auto* _recv 		= recv;
+constexpr auto* _recvfrom 	= recvfrom;
 
 Socket::Socket(SOCKET sock)
 {
@@ -13,75 +33,71 @@ Socket::Socket()
 
 Socket::Socket(AddressFamily family, SocketType type)
 {
+	_socket = INVALID_SOCKET;
 	create(family, type);
-}
-
-Socket::~Socket()
-{
 }
 
 void Socket::bind(SocketAddress address)
 {
-	extern int __stdcall bind(SOCKET socket, const sockaddr* name, int namelen);
-	if (bind(_socket, address.getSockAddr(), sizeof(sockaddr_in)) == SOCKET_ERROR)
+
+	if (_bind(_socket, address.getSockAddr(), sizeof(sockaddr_in)) == SOCKET_ERROR)
 	{
-		throw SocketException("bind failed", WSAGetLastError());
+		throw SocketException("bind failed", getLastErrorCode());
 	}
 }
 
 void Socket::listen(int backlog)
 {
-	extern int __stdcall listen(SOCKET socket, int backlog);
-	if (listen(_socket, backlog) == SOCKET_ERROR)
+	if (_listen(_socket, backlog) == SOCKET_ERROR)
 	{
-		throw SocketException("listen failed", WSAGetLastError());
+		throw SocketException("listen failed", getLastErrorCode());
 	}
 }
 
 std::pair<Socket, SocketAddress> Socket::accept()
 {
-	extern SOCKET __stdcall accept(SOCKET s, sockaddr* addr, int* addrlen);
 	sockaddr addr;
-	int addrLen = sizeof(addr);
-	SOCKET conn = accept(_socket, &addr, &addrLen);
+	unsigned int addrLen = sizeof(addr);
+	SOCKET conn = _accept(_socket, &addr, &addrLen);
 	if (conn == INVALID_SOCKET)
 	{
-		throw SocketException("accept failed", WSAGetLastError());
+		throw SocketException("accept failed", getLastErrorCode());
 	}
 
-	return {Socket(conn), SocketAddress(&addr)};
+	return { Socket(conn), SocketAddress(&addr) };
+}
+
+void Socket::connect(SocketAddress address)
+{
+	if (_connect(_socket, address.getSockAddr(), sizeof(sockaddr)) == SOCKET_ERROR)
+	{
+		throw SocketException("connect failed", getLastErrorCode());
+	}
 }
 
 void Socket::send(std::string message)
 {
-	extern int __stdcall send(SOCKET s, const char* buf, int len, int flags);
-	int result = send(_socket, message.c_str(), message.length(), 0);
-	if (result == SOCKET_ERROR)
+	if (_send(_socket, message.c_str(), message.length(), 0) == SOCKET_ERROR)
 	{
-		throw SocketException("send failed", WSAGetLastError());
+		throw SocketException("send failed", getLastErrorCode());
 	}
 }
 
 void Socket::sendto(std::string message, SocketAddress address)
-{
-	extern int __stdcall sendto(SOCKET s, const char* buf, int len, int flags, const sockaddr* to, int tolen);
-	int result = sendto(_socket, message.c_str(), message.length(), 0, address.getSockAddr(), sizeof(sockaddr));
-	if (result == SOCKET_ERROR)
+{	
+	if (_sendto(_socket, message.c_str(), message.length(), 0, address.getSockAddr(), sizeof(sockaddr)) == SOCKET_ERROR)
 	{
-		throw SocketException("sendto failed", WSAGetLastError());
+		throw SocketException("sendto failed", getLastErrorCode());
 	}
 }
 
 std::string Socket::recv(int bufsize)
-{
-	extern int __stdcall recv(SOCKET s, char* buf, int len, int flags);
+{	
 	char* buf = new char[bufsize];
 	memset(buf, '\0', bufsize);
-	int result = recv(_socket, buf, bufsize, 0);
-	if (result <= 0)
+	if (_recv(_socket, buf, bufsize, 0) <= 0)
 	{
-		delete[] buf;
-		throw SocketException("recv failed", WSAGetLastError());
+		throw SocketException("recv failed", getLastErrorCode());
 	}
 	std::string ret = buf;
 	delete[] buf;
@@ -89,20 +105,18 @@ std::string Socket::recv(int bufsize)
 }
 
 std::pair<std::string, SocketAddress> Socket::recvfrom(int bufsize)
-{
-	extern int __stdcall recvfrom(SOCKET s, char* buf, int len, int flags, sockaddr* from, int* fromlen);
+{	
 	sockaddr from;
-	int fromlen = sizeof(from);
+	unsigned int fromlen = sizeof(from);
 	char* buf = new char[bufsize];
-	int result = recvfrom(_socket, buf, bufsize, 0, &from, &fromlen);
-	if (result <= 0)
+	if (_recvfrom(_socket, buf, bufsize, 0, &from, &fromlen) <= 0)
 	{
 		delete[] buf;
-		throw SocketException("recvfrom failed", WSAGetLastError());
+		throw SocketException("recvfrom failed", getLastErrorCode());
 	}
 	std::string ret = buf;
 	delete[] buf;
-	return {ret, SocketAddress(&from)};
+	return { ret, SocketAddress(&from) };
 }
 
 void Socket::create(AddressFamily family, SocketType type)
@@ -112,7 +126,7 @@ void Socket::create(AddressFamily family, SocketType type)
 	_socket = socket((int)family, (int)type, 0);
 	if (_socket == INVALID_SOCKET)
 	{
-		throw SocketException("socket creation failed", WSAGetLastError());
+		throw SocketException("socket creation failed", getLastErrorCode());
 	}
 }
 
@@ -120,4 +134,13 @@ void Socket::close()
 {
 	closesocket(_socket);
 	_socket = INVALID_SOCKET;
+}
+
+int Socket::getLastErrorCode()
+{
+#if _WIN32
+	return WSAGetLastError();
+#elif __linux__
+	return errno;
+#endif
 }

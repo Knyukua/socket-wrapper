@@ -3,6 +3,14 @@
 #include "SocketAddress.h"
 #include "SocketException.h"
 
+#if __linux__
+typedef int SOCKET;
+#else
+#ifndef _WIN32
+#error Unsupported platform
+#endif
+#endif
+
 class Socket
 {
 private:
@@ -11,11 +19,11 @@ private:
 public:
 	Socket();
 	Socket(AddressFamily family, SocketType type);
-	~Socket();
 
 	void bind(SocketAddress address);
 	void listen(int backlog);
 	std::pair<Socket, SocketAddress> accept();
+	void connect(SocketAddress address);
 
 	void send(std::string message);
 	void sendto(std::string message, SocketAddress address);
@@ -28,4 +36,6 @@ public:
 
 private:
 	SOCKET _socket;
+
+	int getLastErrorCode();
 };

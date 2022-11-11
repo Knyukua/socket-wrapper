@@ -1,8 +1,15 @@
 #pragma once
-#include <WinSock2.h>
 #include <cstdint>
 #include <string>
 #include "SocketEnums.h"
+
+#if _WIN32
+#include <WinSock2.h>
+#elif __linux__
+#include <sys/socket.h>
+#include <netinet/ip.h>
+#endif
+
 
 class SocketAddress
 {

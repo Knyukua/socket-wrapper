@@ -5,12 +5,12 @@
 class SocketException : public std::exception
 {
 public:
-	SocketException(const char* msg);
+    SocketException(const char* msg);
 
-	const char* what() const noexcept override;
+    const char* what() const noexcept override;
 
 private:
-	std::string _msg;
+    std::string _msg;
 
-	int getErrorCode();
+    int getErrorCode();
 };

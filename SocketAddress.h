@@ -16,23 +16,23 @@
 class SocketAddress
 {
 private:
-	friend class Socket;
-	SocketAddress(sockaddr* socketAddress);
+    friend class Socket;
+    SocketAddress(sockaddr* socketAddress);
 
 public:
-	SocketAddress(std::string ip, uint16_t port);
+    SocketAddress(std::string ip, uint16_t port);
 
-	const std::string& ip() const;
-	uint16_t port() const;
-	int family() const;
+    const std::string& ip() const;
+    uint16_t port() const;
+    int family() const;
 
 private:	
-	const sockaddr* getSockAddr() const;
+    const sockaddr* getSockAddr() const;
 
-	std::string _ip;
-	uint16_t _port;
-	int _family;
+    std::string _ip;
+    uint16_t _port;
+    int _family;
 
-	sockaddr_in _sockaddr4;
-	sockaddr_in6 _sockaddr6;
+    sockaddr_in _sockaddr4;
+    sockaddr_in6 _sockaddr6;
 };

@@ -15,27 +15,27 @@ typedef int SOCKET;
 class Socket
 {
 private:
-	Socket(SOCKET sock);
+    Socket(SOCKET sock);
 
 public:
-	Socket();
-	Socket(AddressFamily family, SocketType type);
+    Socket();
+    Socket(AddressFamily family, SocketType type);
 
-	void bind(SocketAddress address);
-	void listen(int backlog);
-	std::pair<Socket, SocketAddress> accept();
-	void connect(SocketAddress address);
+    void bind(SocketAddress address);
+    void listen(int backlog);
+    std::pair<Socket, SocketAddress> accept();
+    void connect(SocketAddress address);
 
-	void send(std::string message);
-	void sendto(std::string message, SocketAddress address);
+    void send(std::string message);
+    void sendto(std::string message, SocketAddress address);
 
-	std::string recv(int bufsize);
-	std::pair<std::string, SocketAddress> recvfrom(int bufsize);
+    std::string recv(int bufsize);
+    std::pair<std::string, SocketAddress> recvfrom(int bufsize);
 
-	void create(AddressFamily family, SocketType type);
-	void close();
+    void create(AddressFamily family, SocketType type);
+    void close();
 
 private:
-	SOCKET _socket;
-	int _family;
+    SOCKET _socket;
+    int _family;
 };

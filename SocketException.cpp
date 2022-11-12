@@ -8,19 +8,19 @@
 
 SocketException::SocketException(const char* msg)
 {
-	_msg = (std::string)"Socket exception: " + msg + "\nError code: " + std::to_string(getErrorCode());
+    _msg = (std::string)"Socket exception: " + msg + "\nError code: " + std::to_string(getErrorCode());
 }
 
 const char *SocketException::what() const noexcept
 {
-	return _msg.c_str();
+    return _msg.c_str();
 }
 
 int SocketException::getErrorCode()
 {
 #if _WIN32
-	return WSAGetLastError();
+    return WSAGetLastError();
 #elif __linux
-	return errno;
+    return errno;
 #endif
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include <utility>
+#include "SocketEnums.h"
 #include "SocketAddress.h"
 #include "SocketException.h"
 
@@ -36,6 +37,5 @@ public:
 
 private:
 	SOCKET _socket;
-
-	int getLastErrorCode();
+	int _family;
 };

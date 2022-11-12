@@ -1,13 +1,15 @@
 #pragma once
 #include <cstdint>
 #include <string>
-#include "SocketEnums.h"
 
 #if _WIN32
 #include <WinSock2.h>
+#include <WS2tcpip.h>
+#pragma comment(lib, "ws2_32")
 #elif __linux__
 #include <sys/socket.h>
 #include <netinet/ip.h>
+#include <arpa/inet.h>
 #endif
 
 
@@ -18,7 +20,7 @@ private:
 	SocketAddress(sockaddr* socketAddress);
 
 public:
-	SocketAddress(std::string ip, uint16_t port, AddressFamily family);
+	SocketAddress(std::string ip, uint16_t port);
 
 	const std::string& ip() const;
 	uint16_t port() const;
@@ -31,5 +33,6 @@ private:
 	uint16_t _port;
 	int _family;
 
-	sockaddr_in _sockaddr;
+	sockaddr_in _sockaddr4;
+	sockaddr_in6 _sockaddr6;
 };
